@@ -1,5 +1,6 @@
 import argparse
 import functools
+from pathlib import Path
 
 import cv2
 import numpy as np
@@ -12,7 +13,6 @@ from utils.data_processing import get_normalize, toTensor
 def process_video_frames(video_path):
     cap = cv2.VideoCapture(video_path)
 
-    frames_num = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     try:
         while True:
             ret, frame = cap.read()
@@ -35,13 +35,12 @@ def preprocess_to_tensor(img):
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--device', type=str, default='cuda')
-    parser.add_argument('--testset_dir', type=str, default='/app/repo/GOPRO')
-    parser.add_argument('--dst', type=str, default='/app/output/Capture0010/motion06350/')
-    parser.add_argument('--src', type=str, default='/app/data/Capture0010/motion_06350.mov')
+    parser.add_argument('--dst', type=Path, required=True)
+    parser.add_argument('--src', type=Path, required=True)
 
     return parser.parse_args()
 
-def numpy_to_cv2(filepath, img):
+def save_array_as_image(filepath: Path, img: np.ndarray):
         
     img = (img* 255).astype(np.uint8)
     if len(img.shape) == 3 and img.shape[2] == 3:
@@ -68,8 +67,8 @@ def video_inference(cfg):
 
             result = result[0, ...].detach().permute(1, 2, 0).cpu().numpy()
 
-            cv2.imwrite(f'{cfg.dst}frame_original{idx}.jpg', frame)
-            numpy_to_cv2(f'{cfg.dst}frame_deblurred_{idx}.jpg', result)
+            cv2.imwrite(cfg.dst / f'frame_original_{idx:06d}.jpg', frame)
+            save_array_as_image(cfg.dst / f'frame_deblurred_{idx:06d}.jpg', result)
 
 
 if __name__ == '__main__':
