@@ -1,5 +1,6 @@
 import argparse
 import functools
+import os
 from pathlib import Path
 
 import cv2
@@ -54,6 +55,8 @@ def video_inference(cfg):
 
     pretrained_dict = torch.load('final_model/DeblurringNet_FT.pth')
     net.load_state_dict(pretrained_dict['deblurring_state_dict'])
+    
+    os.makedirs(cfg.dst, exist_ok=True)
     
     with torch.no_grad():
         for idx, frame in tqdm(enumerate(process_video_frames(cfg.src))):
